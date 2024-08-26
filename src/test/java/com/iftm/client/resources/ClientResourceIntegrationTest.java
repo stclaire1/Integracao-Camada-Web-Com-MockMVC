@@ -2,6 +2,7 @@ package com.iftm.client.resources;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,11 +10,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import com.iftm.client.dto.ClientDTO;
+import com.iftm.client.entities.Client;
 import com.iftm.client.services.ClientService;
 
 //necessário para utilizar o MockMVC
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.time.Instant;
+
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest
@@ -168,4 +174,74 @@ public class ClientResourceIntegrationTest {
                                 .andExpect(jsonPath("$.content[*].income")
                                                 .value(everyItem(greaterThan(salarioLimiteInferior))));
         }
+
+        //Fernanda
+        @Test
+        @DisplayName("Verificar se o endpoint get/clients/income retorna os clientes com renda igual ao valor especificado")
+        public void testarEndPointBuscarClientePorSalario() throws Exception {
+                // Arrange
+                double salario = 4500.0;
+                int quantidadeEsperada = 2; // Número esperado de clientes com renda igual ao salario informado
+
+                // Act
+                ResultActions resultado = mockMVC.perform(get("/clients/income/")
+                                .param("income", String.valueOf(salario))
+                                .accept(MediaType.APPLICATION_JSON));
+
+                // Assert
+                resultado
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content").exists())
+                                .andExpect(jsonPath("$.content").isArray())
+                                .andExpect(jsonPath("$.content", hasSize(quantidadeEsperada)))
+                                .andExpect(jsonPath("$.content[*].income")
+                                                .value(everyItem(equalTo(salario))));
+        }
+
+        // Fernanda
+        @Test
+        @DisplayName("Verificar se o endpoint get/clients/id/{id} retorna o cliente correto")
+        public void testarEndPointBuscarCliente() throws Exception {
+                // Arrange
+
+                Long existingId = 8L;
+                Client client = new Client(existingId, "Toni Morrison", "10219344681", 10000.0,
+                                Instant.parse("1940-02-23T07:00:00Z"), 0);
+
+                // Act
+                ResultActions resultado = mockMVC
+                                .perform(get("/clients/id/{id}", existingId).accept(MediaType.APPLICATION_JSON));
+
+                // Assert
+                resultado
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(existingId))
+                                .andExpect(jsonPath("$.name").value("Toni Morrison"))
+                                .andExpect(jsonPath("$.cpf").value("10219344681"))
+                                .andExpect(jsonPath("$.income").value(10000.0))
+                                .andExpect(jsonPath("$.birthDate").value("1940-02-23T07:00:00Z"))
+                                .andExpect(jsonPath("$.children").value(0));
+        }
+
+        //Fernanda
+        @Test
+        @DisplayName("Verificar se o endpoint get/clients/id/{id} retorna erro para ID inexistente")
+        public void testarEndPointBuscarClienteInexistente() throws Exception {
+                // Arrange
+                Long nonExistingId = 33L;
+
+                // Act
+                ResultActions resultado = mockMVC
+                                .perform(get("/clients/id/{id}", nonExistingId).accept(MediaType.APPLICATION_JSON));
+
+                // Assert
+                resultado
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.timestamp").exists())
+                                .andExpect(jsonPath("$.status").value(404))
+                                .andExpect(jsonPath("$.error").value("Resource not found"))
+                                .andExpect(jsonPath("$.message").value("Entity not found"))
+                                .andExpect(jsonPath("$.path").value("/clients/id/33"));
+        }
+
 }
