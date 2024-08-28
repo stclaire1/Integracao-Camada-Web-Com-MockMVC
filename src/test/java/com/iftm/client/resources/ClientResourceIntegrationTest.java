@@ -302,4 +302,21 @@ public class ClientResourceIntegrationTest {
                                 .andExpect(jsonPath("$.content[*].cpf")
                                                 .value(everyItem(equalTo(cpfExistente))));
         }
+
+        // Ana
+        @Test
+        @Order(9)
+        @DisplayName("Verificar se o endpoint delete/clients/{id} realmente deleta o registro cujo id foi especificado")
+        public void testarEndPointDeletarClientePorId() throws Exception {
+        // Arrange
+        Long clienteId = 1L;
+
+        // Act
+        ResultActions resultado = mockMVC.perform(delete("/clients/{id}", clienteId)
+                .accept(MediaType.APPLICATION_JSON));
+
+        // Assign
+        resultado
+                .andExpect(status().isNoContent());
+        }
 }
