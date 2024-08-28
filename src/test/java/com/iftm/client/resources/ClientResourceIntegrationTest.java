@@ -278,4 +278,28 @@ public class ClientResourceIntegrationTest {
                                 .andExpect(jsonPath("$.message").value("Entity not found"))
                                 .andExpect(jsonPath("$.path").value("/clients/id/33"));
         }
+
+        // Ana
+        @Test
+        @Order(8)
+        @DisplayName("Verificar se o endpoint get/clients/cpf?cpf= retorna os clientes cujo cpf contém o valor especificado")
+        public void testarEndPointBuscarClientePorCPF() throws Exception {
+                // Arrange
+                String cpfExistente = "10619244881";
+                int quantidadeEsperada = 3;
+
+                // Act
+                ResultActions resultado = mockMVC.perform(get("/clients/cpf/")
+                                .param("cpf", String.valueOf(cpfExistente))
+                                .accept(MediaType.APPLICATION_JSON));
+
+                // Assert
+                resultado
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content").exists())
+                                .andExpect(jsonPath("$.content").isArray())
+                                .andExpect(jsonPath("$.content", hasSize(quantidadeEsperada)))
+                                .andExpect(jsonPath("$.content[*].cpf")
+                                                .value(everyItem(equalTo(cpfExistente))));
+        }
 }
